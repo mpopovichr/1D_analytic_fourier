@@ -17,6 +17,18 @@ for line in inp.readlines():
 inp.close()
 e_time = [x-16.0 for x in e_time]
 
+e_area, e_number = [], []
+inp = open('area_and_cell_number.dat','r')
+for line in inp.readlines():
+    dat = line.rstrip().split(',')
+    e_area.append(float(dat[0]))
+    e_number.append(float(dat[1]))
+inp.close()
+
+e_relative_area = np.array(e_area[6:-5])/e_area[0]
+e_relative_number = np.array(e_number[6:-5])/e_number[0]
+e_relative_area_times_number = e_relative_area*e_relative_number
+
 ##PARAMETERS
 L, Lx = 0.38, 1.
 Gamma = 300
@@ -32,32 +44,27 @@ t0_xi = -0.7
 
 simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
 
-
 ## VXX LOGISTIC FUNCTION
 time_range_vxx = np.arange(0.1, 19, 0.1)
 shear = 0.5*integrate_v_blade_basic(time_range_vxx, simple_wing_parameters)
-compare_plot(time_range_vxx, shear, e_time, e_shear, simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', t_label='1D theory', save_path='./shear/')
-
+compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', save_path='./shear/')
 
 ## Qm LOGISTIC FUNCTION
 time_range = np.arange(0.1, 19, 0.1)
 deformation = 0.5*integrate_Qm_blade_basic(time_range, simple_wing_parameters)
-compare_plot(time_range, deformation, e_time, e_elon, simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='deformation', t_label='1D theory', save_path='./shear/')
-
+compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./area/')
 
 ## Qp LOGISTIC FUNCTION
 time_range_qp = e_time
-result_qp = 1./2.*L/Lx*zetaBar/k2 +np.real(1/np.pi*np.array([it.quad(lambda x:calculate_Qp_logistic(x, Gamma, tau, tauT1, tauA, k1, k2, zetaBar)*np.exp(np.complex128(1.j)*x*(t_qp-t0)),0,100) for t_qp in time_range_qp]))
+Qp = integrate_Qp_blade_basic(time_range_qp, simple_wing_parameters)
+compare_plot([e_time, e_time, e_time], [np.exp(Qp), np.exp(Qp)/e_relative_number, e_relative_area] ,simple_wing_parameters, label = ['1D theory', 'theory with CD correction', 'experiment'], name = 'area', x_label='time[h] - 16', y_label='A/A0', save_path='./area/')
+
+
+
+
 plt.figure()
-plt.plot(time_range_qp, np.exp(zip(*result_qp)[0]), label = '1D theory')
-plt.xlabel('time[h] - 16', fontsize=20)
-plt.ylabel('A/A0', fontsize=20)
-plt.legend(loc = 2)
-plt.savefig('Qp_logistic_L_'+str(L)+'_Gamma_'+ str(Gamma)+'_tau_'+str(tau)+'_tauT1_'+str(tauT1)+'_k1_'+str(k1)+'_k2_'+str(k2)+'_zetaBar_'+str(zetaBar)+'.png')
-## ACCOUNTING FOR CELL DIVISIONS
-plt.figure()
-plt.plot(e_time, np.exp(zip(*result_qp))[0], label = 'theory')
-plt.plot(e_time, np.exp(zip(*result_qp)[0])/e_relative_number, label = 'theory with CD correction')
+plt.plot(e_time, np.exp(Qp), label = 'theory')
+plt.plot(e_time, np.exp(Qp)/e_relative_number, label = 'theory with CD correction')
 plt.plot(e_time, e_relative_area, label= 'experiment')
 plt.xlabel('time[h] - 16', fontsize=20)
 plt.ylabel('(A/A0)', fontsize=20)
@@ -161,9 +168,6 @@ plt.savefig('vxx_stepish_logistic.png')
 plt.show()
 
 
-
-
-
 ## TESTING Qm -logistic
 w_range = np.arange(0.01,10,0.01)
 w_minus_range = np.arange(-1, 0., 0.01)
@@ -209,17 +213,6 @@ plt.plot(w_range, np.imag(lambda_test))
 plt.show()
 
 
-# e_area, e_number = [], []
-# inp = open('area_and_cell_number.dat','r')
-# for line in inp.readlines():
-#     dat = line.rstrip().split(',')
-#     e_area.append(float(dat[0]))
-#     e_number.append(float(dat[1]))
-# inp.close()
-
-# e_relative_area = np.array(e_area[6:-5])/e_area[0]
-# e_relative_number = np.array(e_number[6:-5])/e_number[0]
-# e_relative_area_times_number = e_relative_area*e_relative_number
 
 ##checking dual margin data
 # check_time, check_shear = [], []

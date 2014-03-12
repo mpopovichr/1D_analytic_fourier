@@ -35,10 +35,10 @@ def calculate_v_blade_basic(w, p):
 def calculate_Qm_vPart_blade_basic(w, p):
     return 1./(Imag(1)*w+ 1./((1+Imag(1)*w*p.tauT1)*p.tau))*calculate_v_blade_basic(w, p)
 
-def calculate_Qp_blade_basic(w, Gamma, taut, tauT1, tauA, k1, k2, zetabar):
-    return 1./(Imag(1)*w)*calculate_v_logistic(w, Gamma, tau, tauT1, tauA, k1, k2, zetaBar)
+def calculate_Qp_blade_basic(w, p):
+    return 1./(Imag(1)*w)*calculate_v_blade_basic(w, p)
 
-  ## INTEGRATING TO TIME:
+## INTEGRATING TO TIME:
 def integrate_v_blade_basic(time_range, p):
     err = 0.0000001
     upper_limit = 1
@@ -53,7 +53,7 @@ def integrate_v_blade_basic(time_range, p):
 def integrate_Qm_blade_basic(time_range, p):
     result_Qm = -p.xi*p.tau - np.real(np.array(zip(*2.*p.xi/np.pi*np.array([it.quad(lambda x: -Imag(1)*np.pi*p.tauA_xi/(np.sinh(np.pi*p.tauA_xi*x))/(Imag(1)*x+1./((1+Imag(1)*x*p.tauT1)*p.tau))/(1+Imag(1)*x*p.tauT1)*np.exp(Imag(1)*x*(time-p.t0_xi)),0,100) for time in time_range]))[0]))
     print 'calculated xi part'
-    err = 0.0000001
+    err = 1.e-6
     upper_limit = 1
     ratio = np.abs(np.real(calculate_Qm_vPart_blade_basic(upper_limit, p))/np.real(calculate_Qm_vPart_blade_basic(0.001, p)))
     while ratio > err:
@@ -63,6 +63,15 @@ def integrate_Qm_blade_basic(time_range, p):
     result_Qm += np.array(zip(*np.real(np.array([it.quad(lambda x: 1/np.pi*(calculate_Qm_vPart_blade_basic(x, p) * np.exp(Imag(1)*x *t_qm)), 0, upper_limit) for t_qm in time_range])))[0])
     return np.array(result_Qm)
 
+def integrate_Qp_blade_basic(time_range, p):
+    err = 1.e-6
+    upper_limit = 0.5
+    ratio = 1
+    while ratio > err:
+        upper_limit *= 2
+        ratio = np.abs(np.real(calculate_Qp_blade_basic(upper_limit, p))/np.real(calculate_Qp_blade_basic(0.001,p)))
+    result_Qp = 1./2.*p.L/p.Lx*p.zetaBar/p.k2 + np.real(1/np.pi*np.array([it.quad(lambda x:calculate_Qp_blade_basic(x, p)*np.exp(Imag(1)*x*(t_qp)),0,100) for t_qp in time_range]))
+    return np.array(zip(*result_Qp)[0])
 
 ############################################
 
@@ -73,10 +82,10 @@ def calculate_v_hinge_basic(w, Gamma, tau, tauT1, tauA, k1, k2, zetaBar):
 
 #### PLOTTING
 
-def compare_plot(x_t, val_t, x_e, val_e,p,  x_label= '', y_label= '', t_label = 'theory', e_label = 'experiment', save = False, save_path = '', name = ''):
+def compare_plot(x, val, p,  x_label= '', y_label= '', label = ['theory','experiment'], save = False, save_path = '', name = ''):
     plt.figure()
-    plt.plot(x_t, val_t, label = t_label)
-    plt.plot(x_e, val_e, label= e_label)
+    for i in range(len(x)):
+        plt.plot(x[i], val[i], label = label[i])
     plt.legend()
     plt.xlabel(x_label, fontsize=20)
     plt.ylabel(y_label, fontsize=20)
