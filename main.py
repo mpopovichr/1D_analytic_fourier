@@ -162,6 +162,8 @@ plt.show()
 
 
 
+
+
 ## TESTING Qm -logistic
 w_range = np.arange(0.01,10,0.01)
 w_minus_range = np.arange(-1, 0., 0.01)
