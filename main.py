@@ -233,31 +233,3 @@ plt.show()
 
 
 # coth = lambda x: 1/np.tanh(x)
-
-
-
-
-
-f = np.arange(0.1,10,0.1)
-V_step = calculate_v_step(f, Gamma, tau, tauT1,  k1, k2)
-V_logistic = calculate_v_logistic(f, Gamma, tau, tauT1,  k1, k2)
-plt.figure()
-plt.plot(f,np.real(V_step), label = 'step')
-plt.plot(f,np.real(V_logistic), label = 'logistic')
-plt.yscale('log')
-plt.xscale('log')
-plt.legend()
-plt.show()
-
-FTV = np.fft.ifft(V)
-time = np.fft.fftfreq(f.shape[-1])
-
-plt.figure()
-plt.plot(time,np.real(FTV))
-plt.plot(time,np.imag(FTV))
-plt.xscale('log')
-plt.show()
-
-t = np.arange(256)
-sp = np.fft.fft(np.sin(t))
-freq = np.fft.fftfreq(t.shape[-1])

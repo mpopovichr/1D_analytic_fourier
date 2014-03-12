@@ -63,7 +63,7 @@ def integrate_Qm_blade_basic(time_range, p):
     result_Qm += np.array(zip(*np.real(np.array([it.quad(lambda x: 1/np.pi*(calculate_Qm_vPart_blade_basic(x, p) * np.exp(Imag(1)*x *t_qm)), 0, upper_limit) for t_qm in time_range])))[0])
     return np.array(result_Qm)
 
-aoeuaeouaeu
+
 ############################################
 
 ## BASIC HINGE:
