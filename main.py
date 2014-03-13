@@ -31,46 +31,41 @@ e_relative_area_times_number = e_relative_area*e_relative_number
 
 ##PARAMETERS
 L, Lx = 0.38, 1.
-Gamma = 300
+Gamma =  250
 tau, tauT1 = 1.9, 4.1
 tauA_bar = 0.8
 t0_bar = 1.8
 k1, k2 = 2. , 4.
-zetaBar = 5.9
+zetaBar = 5.5
 c = -0.17
 xi = c/tau
+xi_hinge = -0.22/tau
 tauA_xi = 0.05
 t0_xi = -0.7
 
-simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
+simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
 
 ## VXX LOGISTIC FUNCTION
 time_range_vxx = np.arange(0.1, 19, 0.1)
 shear = 0.5*integrate_v_blade_basic(time_range_vxx, simple_wing_parameters)
+compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', save_path='./shear/', save = True)
+
+time_range_vxx = np.arange(0.1, 19, 0.1)
+shear = 0.5*integrate_v_blade(time_range_vxx, simple_wing_parameters)
 compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', save_path='./shear/')
+
+
 
 ## Qm LOGISTIC FUNCTION
 time_range = np.arange(0.1, 19, 0.1)
 deformation = 0.5*integrate_Qm_blade_basic(time_range, simple_wing_parameters)
-compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./area/')
+compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./deformation/', save = True)
 
 ## Qp LOGISTIC FUNCTION
 time_range_qp = e_time
 Qp = integrate_Qp_blade_basic(time_range_qp, simple_wing_parameters)
-compare_plot([e_time, e_time, e_time], [np.exp(Qp), np.exp(Qp)/e_relative_number, e_relative_area] ,simple_wing_parameters, label = ['1D theory', 'theory with CD correction', 'experiment'], name = 'area', x_label='time[h] - 16', y_label='A/A0', save_path='./area/')
+compare_plot([e_time, e_time, e_time], [np.exp(Qp), np.exp(Qp)/e_relative_number, e_relative_area] ,simple_wing_parameters, label = ['1D theory', 'theory with CD correction', 'experiment'], name = 'area', x_label='time[h] - 16', y_label='A/A0', save_path='./area/', save = True)
 
-
-
-
-plt.figure()
-plt.plot(e_time, np.exp(Qp), label = 'theory')
-plt.plot(e_time, np.exp(Qp)/e_relative_number, label = 'theory with CD correction')
-plt.plot(e_time, e_relative_area, label= 'experiment')
-plt.xlabel('time[h] - 16', fontsize=20)
-plt.ylabel('(A/A0)', fontsize=20)
-plt.legend(loc = 2)
-plt.savefig('Qp_divided_by_relative_number_logistic_L_'+str(L)+'_Gamma_'+ str(Gamma)+'_tau_'+str(tau)+'_tauT1_'+str(tauT1)+'_k1_'+str(k1)+'_k2_'+str(k2)+'_zetaBar_'+str(zetaBar)+'.png')
-plt.show()
 
 # plt.close()
 
@@ -89,34 +84,6 @@ plt.show()
 
 
 len(e_time)
-
-
-L, Lx = 0.38, 1.
-Gamma = 300
-tau, tauT1 = 1.9, 0
-tauA = 0.8
-t0 = 1.8
-k1, k2 = 2.0 , 4.
-zetaBar = 6
-tauA_xi = 0.05
-t0_xi = 0.
-plt.figure()
-plt.plot(e_time, e_elon, label = 'experiment')
-for tauT1 in np.arange(3.5, 4.6, 0.2):
-    c = -0.17
-    xi = c/tau
-    tauA_xi = 0.05
-    t0_xi = -0.7
-    ## Qm LOGISTIC FUNCTION
-    time_range = np.arange(0.1, 19, 0.1)
-    last_term = -0.5*c-xi/2./np.pi*np.real(np.array([it.quad(lambda x: -2*np.complex128(1.j)*np.pi*tauA_xi/(np.sinh(np.pi*tauA_xi*x))/(np.complex128(1.j)*x+1./((1+np.complex128(1.j)*x*tauT1)*tau))/(1+np.complex128(1.j)*x*tauT1)*np.exp(np.complex128(1.j)*x*(time-t0_xi)),0,100) for time in time_range]))
-    result = last_term +  np.real(np.array([it.quad(lambda x: 1/2./np.pi*(calculate_Qm_vPart_logistic(x, Gamma, tau, tauT1, tauA , k1, k2, zetaBar) * np.exp(np.complex128(1.j)*x *(t_qm-t0))), 0, 100) for t_qm in time_range]))
-    plt.plot(time_range, zip(*(result))[0], label = 'tauT1 = '+str(tauT1))
-    plt.legend(loc=4)
-    plt.xlabel('time', fontsize=20)
-    plt.ylabel('Q_minus', fontsize=20)
-plt.savefig('./Qm/half_Qm_logistic_tauT1_L_'+str(L)+'_Gamma_'+ str(Gamma)+'_tau_'+str(tau)+'_k1_'+str(k1)+'_k2_'+str(k2)+'_zetaBar_'+str(zetaBar)+'.png')
-plt.close()
 
 
 ##CHECK SELF CONSISTENCY
