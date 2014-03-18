@@ -31,24 +31,25 @@ e_relative_area_times_number = e_relative_area*e_relative_number
 
 ##PARAMETERS
 L, Lx = 0.38, 1.
-Gamma =  250
-tau, tauT1 = 1.9, 4.1
+Gamma =  200
+tau, tauT1 = 1.9, 3.9
 tauA_bar = 0.8
 t0_bar = 1.8
-k1, k2 = 2. , 4.
-zetaBar = 5.5
+k1, k2 = 2 , 4
+zetaBar = 5
 c = -0.17
 xi = c/tau
 xi_hinge = -0.22/tau
 tauA_xi = 0.05
-t0_xi = -0.7
+t0_xi = -0.3
+xi_undelayed_frac = 0.1
 
-simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
+simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_undelayed_frac, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
 
 ## VXX LOGISTIC FUNCTION
-time_range_vxx = np.arange(0.1, 19, 0.1)
-shear = 0.5*integrate_v_blade_basic(time_range_vxx, simple_wing_parameters)
-compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', save_path='./shear/', save = True)
+# time_range_vxx = np.arange(0.1, 19, 0.1)
+# shear = 0.5*integrate_v_blade_basic(time_range_vxx, simple_wing_parameters)
+# compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters, name = 'shear', x_label='time[h] - 16', y_label='shear', save_path='./shear/', save = True)
 
 time_range_vxx = np.arange(0.1, 19, 0.1)
 shear = 0.5*integrate_v_blade(time_range_vxx, simple_wing_parameters)
@@ -57,9 +58,13 @@ compare_plot([time_range_vxx, e_time], [shear, e_shear], simple_wing_parameters,
 
 
 ## Qm LOGISTIC FUNCTION
+# time_range = np.arange(0.1, 19, 0.1)
+# deformation = 0.5*integrate_Qm_blade_basic(time_range, simple_wing_parameters)
+# compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./deformation/', save = True)
+
 time_range = np.arange(0.1, 19, 0.1)
-deformation = 0.5*integrate_Qm_blade_basic(time_range, simple_wing_parameters)
-compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./deformation/', save = True)
+deformation = 0.5*integrate_Qm_blade(time_range, simple_wing_parameters)
+compare_plot([time_range, e_time], [deformation, e_elon], simple_wing_parameters, name = 'elongation', x_label='time[h] - 16', y_label='elongation', save_path='./deformation/')
 
 ## Qp LOGISTIC FUNCTION
 time_range_qp = e_time
@@ -67,7 +72,57 @@ Qp = integrate_Qp_blade_basic(time_range_qp, simple_wing_parameters)
 compare_plot([e_time, e_time, e_time], [np.exp(Qp), np.exp(Qp)/e_relative_number, e_relative_area] ,simple_wing_parameters, label = ['1D theory', 'theory with CD correction', 'experiment'], name = 'area', x_label='time[h] - 16', y_label='A/A0', save_path='./area/', save = True)
 
 
-# plt.close()
+## ONLY STRESS DELAY
+deformation_list = []
+time_range_list = []
+label_list = []
+time_range = np.arange(0.1,19,0.1)
+for xi_undelayed_frac in np.arange(0.0, 1.2, 0.2):
+    print xi_undelayed_frac
+    simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_undelayed_frac, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
+    time_range_list.append(time_range)
+    deformation_list.append(0.5*integrate_Qm_blade(time_range, simple_wing_parameters))
+    label_list.append(str(xi_undelayed_frac))
+deformation_list.append(e_elon)
+time_range_list.append(e_time)
+label_list.append('experiment')
+compare_plot(time_range_list, deformation_list, simple_wing_parameters, label = label_list)
+
+## ONLY T1 DELAY
+deformation_list = []
+time_range_list = []
+label_list = []
+time_range = np.arange(0.1,19,0.1)
+for tauT1 in np.arange(3.6, 4.6, 0.2):
+    print tauT1
+    simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_undelayed_frac, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
+    time_range_list.append(time_range)
+    deformation_list.append(0.5*integrate_Qm_blade(time_range, simple_wing_parameters))
+    label_list.append(str(tauT1))
+deformation_list.append(e_elon)
+time_range_list.append(e_time)
+label_list.append('experiment')
+compare_plot(time_range_list, deformation_list, simple_wing_parameters, label = label_list)
+
+
+## ONLY T1 DELAY AND STRESS DELAY
+
+time_range = np.arange(0.1,19,0.1)
+for xi_undelayed_frac in np.arange(0.0, 1.2,0.2):
+    deformation_list = []
+    time_range_list = []
+    label_list = []
+    for tauT1 in np.arange(3.6, 4.6, 0.2):
+        print xi_undelayed_frac, tauT1
+        simple_wing_parameters = Wing_parameters(Gamma, tau, tauT1,k1,k2,zetaBar,xi, xi_undelayed_frac, xi_hinge,tauA_bar,t0_bar,tauA_xi,t0_xi,L,Lx)
+        time_range_list.append(time_range)
+        deformation_list.append(0.5*integrate_Qm_blade(time_range, simple_wing_parameters))
+        label_list.append(str(tauT1))
+    deformation_list.append(e_elon)
+    time_range_list.append(e_time)
+    label_list.append('experiment')
+    compare_plot(time_range_list, deformation_list, simple_wing_parameters, label = label_list, name='undelayed_frac_'+str(xi_undelayed_frac), save_path='./', save = True, show = False)
+
 
 
 ## CALCULATING VXX in hinge
@@ -82,9 +137,17 @@ plt.ylabel('half_v_xx', fontsize=20)
 plt.show()
 # plt.savefig('half_vxx_logistic_L_'+str(L)+'_Gamma_'+ str(Gamma)+'_tau_'+str(tau)+'_tauT1_'+str(tauT1)+'_k1_'+str(k1)+'_k2_'+str(k2)+'_zetaBar_'+str(zetaBar)+'.png')
 
+w_range = np.arange(0.0001, 1, 0.0001)
+plt.figure()
+plt.plot(w_range, calculate_v_blade(w_range, simple_wing_parameters))
+plt.xscale('log')
+plt.show()
 
-len(e_time)
-
+w_range = np.arange(0.01, 10, 0.01)
+plt.figure()
+plt.plot(w_range, np.abs(calculate_Qm_vPart_blade(w_range, simple_wing_parameters)))
+plt.yscale('log')
+plt.show()
 
 ##CHECK SELF CONSISTENCY
 Qm = np.array(zip(*result)[0])
